@@ -19,7 +19,7 @@ Part of this algrithom is referred from pixhawk.
 #include "stm32f10x.h"
 #include "stm32f10x_it.h"
 #include <math.h>
-#include "IMU.h"
+#include "imu.h"
 #include "IMUSO3.h"
 
 //! Auxiliary variables to reduce number of repeated operations

@@ -1,27 +1,30 @@
-/*
-      ____                      _____                  +---+
-     / ___\                     / __ \                 | R |
-    / /                        / /_/ /                 +---+
-   / /   ________  ____  ___  / ____/___  ____  __   __
-  / /  / ___/ __ `/_  / / _ \/ /   / __ \/ _  \/ /  / /
- / /__/ /  / /_/ / / /_/  __/ /   / /_/ / / / / /__/ /
- \___/_/   \__,_/ /___/\___/_/    \___ /_/ /_/____  /
-                                                 / /
-                                            ____/ /
-                                           /_____/
-编写者：小马  (Camel) 、 祥(Samit)、Nieyong
-作者E-mail：375836945@qq.com
-编译环境：MDK-Lite  Version: 5.10
-初版时间: 2014-01-28
-功能：
-1. 硬件驱动
-2. 飞行控制：自稳、定高、智能头向、自动降落、故障保护
-3. 支持App与2401 RC同时控制
-4. App 与 PC端在线监控、无线调参
-------------------------------------
-*/
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+//      ____                      _____                  +---+
+//     / ___\                     / __ \                 | R |
+//    / /                        / /_/ /                 +---+
+//   / /   ________  ____  ___  / ____/___  ____  __   __
+//  / /  / ___/ __ `/_  / / _ \/ /   / __ \/ _  \/ /  / /
+// / /__/ /  / /_/ / / /_/  __/ /   / /_/ / / / / /__/ /
+// \___/_/   \__,_/ /___/\___/_/    \___ /_/ /_/____  /
+//                                                 / /
+//                                            ____/ /
+//                                           /_____/
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Writers: Pony (Camel), Xiang (Samit), Nieyong
+// Author E-mail: 375836945@qq.com
+// Compiler environment: MDK-Lite Version: 5.10
+// First edition Time: 2014-01-28
+// Features:
+// 1. hardware drivers
+// 2. Flight Control: self-stabilization, set high, head to the intelligent, automatic landing, fault protection
+// 3. Support App and simultaneously control 2401 RC
+// 4. App and PC online monitoring, wireless parameter adjustment
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 #include "SysConfig.h"
-#include "config.h"        //包含所有的驱动头文件
+#include "config.h"        
 #include "imu.h"
 #include "Altitude.h"
 #include "CommApp.h"
@@ -32,78 +35,128 @@
 #include "FailSafe.h"
 
 //sw counter
-uint16_t  batCnt;
+uint16_t batCnt;
 //check executing time and period in different loop
-uint32_t startTime[5],execTime[5];
+
+uint32_t startTime[5];
+uint32_t execTime[5];
 uint32_t realExecPrd[5];	//us , real called period in different loop
 
 /********************************************
-              飞控主函数入口
-功能：
-1.初始化各个硬件
-2.初始化系统参数
-********************************************/
-int main(void)
-{
+ Primary flight control function entry
+ Features:
+ 1. initialize the various hardware
+ 2. The system initialization parameters
+ ********************************************/
+int main(void) {
 
-    SystemClock_HSE(9);           //系统时钟初始化，时钟源外部晶振HSEs  8*9=72MHz;
-    cycleCounterInit();				// Init cycle counter
-    SysTick_Config(SystemCoreClock / 1000);	//SysTick开启系统tick定时器并初始化其中断，1ms
+	uint8_t toggle = 1;
+	uint32_t toggleCnt = 0;
+	// System clock initialization, external crystal HSEs of the clock source 8 * 9 = 72MHz;
+	SystemClock_HSE(9);
 
-    UART1_init(SysClock,BT_BAUD_Set); //串口1初始化
+	cycleCounterInit();	 // Init cycle counter
 
-    NVIC_INIT();	                //中断初始化
+	// SysTick starts the system tick timer and initializes its interrupt, 1ms
+	SysTick_Config(SystemCoreClock / 1000);
 
-    STMFLASH_Unlock();            //内部flash解锁
+	// Serial port 1 initialization
+	UART1_init(SysClock, BT_BAUD_Set);
 
-    LoadParamsFromEEPROM();
+	//	Interrupt initialization
+	NVIC_INIT();
 
-    LedInit();	                //IO初始化
+	// Internal flash unlock
+	STMFLASH_Unlock();
 
-    BT_PowerInit();               //蓝牙电源初始化完成，默认关闭
-    MotorInit();	                //马达初始化
-    BatteryCheckInit();           //电池电压监测初始化
-    IIC_Init();                   //IIC初始化
+	LoadParamsFromEEPROM();
 
-#ifdef IMU_SW										//使用软件解算
-    MPU6050_initialize();
+	// IO initialization
+	LedInit();
+
+	// The Bluetooth power supply is initialized and is turned off by default.
+	BT_PowerInit();
+
+	// Motor Initialization
+	MotorInit();
+
+	// Battery voltage monitoring initialization
+	BatteryCheckInit();
+
+	// I2C Initialization
+	IIC_Init();
+
+#ifdef IMU_SW
+	// Use software to solve
+	MPU6050_initialize();
 #else
-    MPU6050_DMP_Initialize();     //初始化DMP引擎
+
+	// Initialize the DMP engine
+    MPU6050_DMP_Initialize();
 #endif
 
-    //HMC5883L_SetUp();           //初始化磁力计HMC5883L
+	// Initialize the magnetometer HMC5883L
+	//HMC5883L_SetUp();
 
-    NRF24L01_INIT();              //NRF24L01初始化
+	// Initialize NFL24L01 2.4 GH via SPI
+	NRF24L01_INIT();
 
-    PowerOn();                    //开机等待
-    BT_ATcmdWrite();              //蓝牙写配置
+	// Startup waiting
+	PowerOn();
 
-    BatteryCheck();
+	// Bluetooth write configuration
+	BT_ATcmdWrite();
 
-    MS5611_Init();
+	// Initialize Battery Check
+	BatteryCheck();
 
-    IMU_Init();			// sample rate and cutoff freq.  sample rate is too low now due to using dmp.
+	MS5611_Init();
+
+	IMU_Init();			// sample rate and cutoff freq.
+						// sample rate is too low now due to using dmp.
 
 #ifdef UART_DEBUG
-    //定时器3初始化，串口调试信息输出
-    TIM3_Init(SysClock,2000);
+	//Timer 3 initialization, serial debugging information output
+	TIM3_Init(SysClock, 2000);
 #endif
 
-    //定时器4初始化，用于飞控主循环基准定时
-    TIM4_Init(SysClock,1000);
+	//Timer 4 is initialized and used for
+	// the reference timing of the main loop of the flight control
+	TIM4_Init(SysClock, 1000);
 
-    MotorPwmFlash(10,10,10,10);
+	MotorPwmFlash(10, 10, 10, 10);
 
-    altCtrlMode=MANUAL;
-    WaitBaroInitOffset();		//等待气压初始化高度完成
+	altCtrlMode = MANUAL;
 
-    //飞控控制主循环
-    while (1)
-    {
-        /*Use DMP in MPU6050 for imu , it's accurate but slow and time costing and time unstable */
-        //special freq for dmp. 1000/7. use 3-5ms if normal
-        //if miss time becasue of other long time task, dmp maybe  need to use 10ms
-        //Crazepony默认使用软件解算
+	// Wait for the barometric initialization altitude to complete
+	WaitBaroInitOffset();
+
+	delay_ms(1000);
+	LedA_on;
+	LedB_off;
+	LedC_on;
+	LedD_off;
+
+	MotorPwmFlash(100, 100, 100, 100);
+	delay_ms(1000);
+
+	LedB_on;
+	LedC_off;
+	LedD_on;
+	LedA_off;
+
+	MotorPwmFlash(0, 0, 0, 0);
+	delay_ms(1000);
+
+	// Flight control control main loop
+	while (1) {
+
+#if 1
+		/*Use DMP in MPU6050 for imu , it's accurate but slow and time costing and time unstable */
+		//special freq for dmp. 1000/7. use 3-5ms if normal
+
+		//if miss time because of other long time task, dmp maybe need to use 10ms
+		// Crazepony default solver software
 #ifndef IMU_SW
 #ifdef DEBUG_NEW_CTRL_PRD
         if(anyCnt>=7)	//take about 3ms, to develop a faster control
@@ -117,124 +170,127 @@ int main(void)
             realExecPrd[0]=micros()-startTime[0];
             startTime[0]=micros();
 
-            DMP_Routing();	        //DMP 线程  所有的数据都在这里更新
-            DMP_getYawPitchRoll();  //读取 姿态角
+DMP_Routing (); // DMP thread all the data update here
+DMP_getYawPitchRoll (); // read attitude angle
 
-            execTime[0]=micros()-startTime[0];	//测量任务执行时间，CPU占用率
+execTime [0] = micros () - startTime [0]; // measuring task execution time, CPU occupancy rate
 
         }
 #endif
 
-        //100Hz Loop
-        //Crazepony默认使用100Hz的控制频率
-        if(loop100HzCnt>=10)
-        {
-            loop100HzCnt=0;
+		//100Hz Loop
+		//Crazepony uses a control frequency of 100Hz by default
+		if (loop100HzCnt >= 10) {
+			loop100HzCnt = 0;
 
-            realExecPrd[1]=micros()-startTime[1];
-            startTime[1]=micros();
+			realExecPrd[1] = micros() - startTime[1];
+			startTime[1] = micros();
 
 #ifdef IMU_SW
-            IMUSO3Thread();
+			IMUSO3Thread();
 #else
             IMU_Process();
 #endif
-            accUpdated=1;
+			accUpdated = 1;
 
-            //气压读取
-            MS5611_ThreadNew();		//FSM, take aboue 0.5ms some time
+			// barometric pressure reading
+			MS5611_ThreadNew();		//FSM, take aboue 0.5ms some time
 
-            //imu校准
-            if(imuCaliFlag)
-            {
-                if(IMU_Calibrate())
-                {
-                    imuCaliFlag=0;
-                    gParamsSaveEEPROMRequset=1;	//请求记录到EEPROM
-                    imu.caliPass=1;
-                }
-            }
+			// imu calibration
+			if (imuCaliFlag) {
+				if (IMU_Calibrate()) {
+					imuCaliFlag = 0;
+					gParamsSaveEEPROMRequset = 1; // requests to the EEPROM
+					imu.caliPass = 1;
+				}
+			}
 
-            CtrlAttiRate();
-            CtrlMotor();
+			CtrlAttiRate();
+			CtrlMotor();
 
-            execTime[1]=micros()-startTime[1];
-        }
+			execTime[1] = micros() - startTime[1];
+		}
 
-        //Need to recieve 2401 RC instantly so as to clear reg.
-        Nrf_Irq();
+		//Need to recieve 2401 RC instantly so as to clear reg.
+		Nrf_Irq();
 
-        //50Hz Loop
-        if(loop50HzFlag)
-        {
-            loop50HzFlag=0;
-            realExecPrd[3]=micros()-startTime[3];
-            startTime[3]=micros();
+		//50Hz Loop
+		if (loop50HzFlag) {
+			loop50HzFlag = 0;
+			realExecPrd[3] = micros() - startTime[3];
+			startTime[3] = micros();
 
-            RCDataProcess();
+			RCDataProcess();
 
-            FlightModeFSMSimple();
+			FlightModeFSMSimple();
 
-            if(altCtrlMode==LANDING)
-            {
-                AutoLand();
-            }
+			if (altCtrlMode == LANDING) {
+				AutoLand();
+			}
 
-            //高度融合
-            AltitudeCombineThread();
+			// high degree of integration
+			AltitudeCombineThread();
 
-            CtrlAlti();
+			CtrlAlti();
 
-            CtrlAttiAng();
+			CtrlAttiAng();
 
-            //PC Monitor
+			//PC Monitor
 #ifndef UART_DEBUG
             if(btSrc!=SRC_APP) {
                 //CommPCUploadHandle();	//tobe improved inside
             }
 #endif
 
-            execTime[3]=micros()-startTime[3];
-        }
+			execTime[3] = micros() - startTime[3];
+		}
 
-        //10Hz loop
-        if(loop10HzFlag)
-        {
-            loop10HzFlag=0;
-            realExecPrd[2]=micros()-startTime[2];
-            startTime[2]=micros();
+		//10Hz loop
+		if (loop10HzFlag) {
+			loop10HzFlag = 0;
+			realExecPrd[2] = micros() - startTime[2];
+			startTime[2] = micros();
 
-            //Check battery every BAT_CHK_PRD ms
-            if((++batCnt) * 100 >=BAT_CHK_PRD)
-            {
-                batCnt=0;
-                BatteryCheck();
-            }
+			//Check battery every BAT_CHK_PRD ms
+			if ((++batCnt) * 100 >= BAT_CHK_PRD) {
+				batCnt = 0;
+				BatteryCheck();
+			}
 
-            //手机APP有请求飞控信息，则发送给手机APP
-            if(flyLogApp)
-            {
-                CommAppUpload();
-                flyLogApp=0;
-            }
+			// phone APP have requested flight control information is sent to the mobile phone APP
+			if (flyLogApp) {
+				CommAppUpload();
+				flyLogApp = 0;
+			}
 
-            //EEPROM Conifg Table request to write.
-            if(gParamsSaveEEPROMRequset)
-            {
-                gParamsSaveEEPROMRequset=0;
-                SaveParamsToEEPROM();
-            }
+			//EEPROM Config Table request to write.
+			if (gParamsSaveEEPROMRequset) {
+				gParamsSaveEEPROMRequset = 0;
+				SaveParamsToEEPROM();
+			}
 
-            //失控保护，例如侧翻，丢失遥控信号等
-            FailSafe();
+			// out of control protection, such as rollover, loss of remote control signals, etc.
+			FailSafe();
 
-            //处理LED闪烁事件
-            LEDFSM();
+			// Handle LED flashes event
+			LEDFSM();
 
-            execTime[2]=micros()-startTime[2];
-        }
+			execTime[2] = micros() - startTime[2];
+		}
+#endif
 
-        //pc cmd process. need to return as quickly as ps
+#if 0
+		{
+			if (toggleCnt++ > 200000) {
+				(!toggle) ? LedB_on : LedB_off;
+				(toggle) ? LedD_on : LedD_off;
+				toggle = !toggle;
+				toggleCnt = 0;
+			}
+		}
+#endif
+
+		//pc cmd process. need to return as quickly as ps
 #ifndef UART_DEBUG
         if(pcCmdFlag)
         {
@@ -242,6 +298,8 @@ int main(void)
             CommPCProcessCmd();
         }
 #endif
-    }//end of while(1)
+        printf(".");
+
+	}	//end of while(1)
 }
 

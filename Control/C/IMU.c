@@ -1,7 +1,10 @@
+
+
+#include <stdint.h>
 #include "imu.h"
 
 //
-float accFilted[3];	//m/s2,in body frame, filtered
+volatile float accFilted[3];	//m/s2,in body frame, filtered
 float DCMbg[3][3];
 
 
@@ -48,7 +51,7 @@ float LowPassFilter2p_apply(float sample)
 				delay_element_0 = sample - _delay_element_1 * _a1 - _delay_element_2 * _a2;
 				// do the filtering
 				if (isnan(delay_element_0) || isinf(delay_element_0)) {
-						// don't allow bad values to propogate via the filter
+						//don't allow bad values to propagate via the filter
 						delay_element_0 = sample;
 				}
 				output = delay_element_0 * _b0 + _delay_element_1 * _b1 + _delay_element_2 * _b2;

@@ -1,13 +1,10 @@
-#ifndef __MS5611_H
-#define __MS5611_H
+#ifndef __MS5611_H_
+#define __MS5611_H_
 
-#define bool char
 
-typedef unsigned char uint8_t;
-typedef unsigned short uint16_t;
-typedef unsigned int   uint32_t;
-typedef short 		int16_t;
-typedef int 			int32_t;
+#include "stdint.h"
+
+#include "stdbool.h"
 
 
 
@@ -15,7 +12,7 @@ typedef void (* baroOpFuncPtr)(void);                       // baro start operat
 typedef void (* baroCalculateFuncPtr)(int32_t *pressure, int32_t *temperature);             // baro calculation (filled params are pressure and temperature)
 
 
-typedef struct baro_t
+typedef struct
 {
     uint16_t ut_delay;
     uint16_t up_delay;
@@ -30,3 +27,6 @@ bool ms5611Detect(baro_t *baro);
 
 
 #endif
+
+
+//------------------End of File----------------------------

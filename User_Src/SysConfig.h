@@ -1,18 +1,44 @@
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+//      ____                      _____                  +---+
+//     / ___\                     / __ \                 | R |
+//    / /                        / /_/ /                 +---+
+//   / /   ________  ____  ___  / ____/___  ____  __   __
+//  / /  / ___/ __ `/_  / / _ \/ /   / __ \/ _  \/ /  / /
+// / /__/ /  / /_/ / / /_/  __/ /   / /_/ / / / / /__/ /
+// \___/_/   \__,_/ /___/\___/_/    \___ /_/ /_/____  /
+//                                                 / /
+//                                            ____/ /
+//                                           /_____/
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #ifndef _SYS_CONFIG_H
 #define _SYS_CONFIG_H
 //
 #include "stm32f10x.h"
 
 #define YAW_CORRECT
-#define IMU_SW		//姿态解算使用软件解算，不再使用MPU6050的硬件解算单元DMP
+
+// Attitude solution uses software to solve,
+// no longer uses the hardware solution unit DMP of MPU6050
+#define IMU_SW
+
 #define HIGH_FREQ_CTRL
+
 #define NEW_RC
 
-//#define UART_DEBUG	//开启改宏，则可以使用串口助手打印调试。否则使用Crazepony上位机
+// When the macro is turned on, you can use the serial assistant to print and debug.
+// Otherwise use Crazepony host computer
 
+#define UART_DEBUG	1
 
-enum {SRC_PC,SRC_APP};
+enum {
+	SRC_PC,
+	SRC_APP
+};
 extern uint8_t btSrc;
 
 #endif
 
+
+//------------------End of File----------------------------

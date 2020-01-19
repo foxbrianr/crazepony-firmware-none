@@ -1,225 +1,246 @@
 /*    
-      ____                      _____                  +---+
-     / ___\                     / __ \                 | R |
-    / /                        / /_/ /                 +---+
-   / /   ________  ____  ___  / ____/___  ____  __   __
-  / /  / ___/ __ `/_  / / _ \/ /   / __ \/ _  \/ /  / /
+ ____                      _____                  +---+
+ / ___\                     / __ \                 | R |
+ / /                        / /_/ /                 +---+
+ / /   ________  ____  ___  / ____/___  ____  __   __
+ / /  / ___/ __ `/_  / / _ \/ /   / __ \/ _  \/ /  / /
  / /__/ /  / /_/ / / /_/  __/ /   / /_/ / / / / /__/ /
  \___/_/   \__,_/ /___/\___/_/    \___ /_/ /_/____  /
-                                                 / /
-                                            ____/ /
-                                           /_____/
-moto.c file
-编写者：小马  (Camel)
-作者E-mail：375836945@qq.com
-编译环境：MDK-Lite  Version: 4.23
-初版时间: 2014-01-28
-功能：
-1.内部flash初始化，相当于一个片内的模拟EEPROM
-2.具体操作细节还有些BUG，有些地址读出来的数据有问题，我暂时没找到原因，望各路热血青年一起来解决
-------------------------------------
-*/
+ / /
+ ____/ /
+ /_____/
+ moto.c file
+ 编写者：小马  (Camel)
+ 作者E-mail：375836945@qq.com
+ 编译环境：MDK-Lite  Version: 4.23
+ 初版时间: 2014-01-28
+ 功能：
+ 1.内部flash初始化，相当于一个片内的模拟EEPROM
+ 2.具体操作细节还有些BUG，有些地址读出来的数据有问题，我暂时没找到原因，望各路热血青年一起来解决
+ ------------------------------------
+ */
 #include "stmflash.h"
 #include "delay.h"
 #include "UART1.h"
 #include "stdio.h"
-//////////////////////////////////////////////////////////////////////////////////	 
+//////////////////////////////////////////////////////////////////////////////////
 //stm32f103t8u6--->64K Bytes  flash
-//小容量stm32的最后一页开始地址为0x08007c00，结束地址为0x08007fff
-//每一页大小为1K个字节
+//The last page address stm32 small capacity for 0x08007c00, end address 0x08007fff
+//Each page size of 1K bytes
 //////////////////////////////////////////////////////////////////////////////////
 
-//解锁STM32的FLASH
+//////////////////////////////////////////////////////////////////////////////////
+//Unlock the STM32 FLASH
+//////////////////////////////////////////////////////////////////////////////////
 void STMFLASH_Unlock(void)
 {
-  FLASH->KEYR=FLASH_KEY1;//写入解锁序列.
-  FLASH->KEYR=FLASH_KEY2;
-  printf("Inner FLASH unlock success...\r\n");
+	FLASH->KEYR = FLASH_KEY1; //Written unlock sequence.
+	FLASH->KEYR = FLASH_KEY2;
+	printf("Inner FLASH unlock success...\r\n");
 }
-//flash上锁
+//////////////////////////////////////////////////////////////////////////////////
+//flash lock
+//////////////////////////////////////////////////////////////////////////////////
 void STMFLASH_Lock(void)
 {
-  FLASH->CR|=1<<7;//上锁
+	FLASH->CR |= 1 << 7; //Lock
 }
-//得到FLASH状态
+//////////////////////////////////////////////////////////////////////////////////
+//Get FLASH status
+//////////////////////////////////////////////////////////////////////////////////
 u8 STMFLASH_GetStatus(void)
-{	
-	u32 res;		
-	res=FLASH->SR; 
-	if(res&(1<<0))return 1;		    //忙
-	else if(res&(1<<2))return 2;	//编程错误
-	else if(res&(1<<4))return 3;	//写保护错误
-	return 0;						//操作完成
+{
+	u32 res;
+	res = FLASH->SR;
+	if (res & (1 << 0))
+		return 1;		    //busy
+	else if (res & (1 << 2))
+		return 2;	//Programming error
+	else if (res & (1 << 4))
+		return 3;	//Write protect error
+	return 0;						//The operation is complete
 }
-//等待操作完成
-//time:要延时的长短
-//返回值:状态.
+//////////////////////////////////////////////////////////////////////////////////
+//Await completion
+//time: to the length of delay
+//Returns: status.
+//////////////////////////////////////////////////////////////////////////////////
 u8 STMFLASH_WaitDone(u16 time)
 {
 	u8 res;
 	do
 	{
-		res=STMFLASH_GetStatus();
-		if(res!=1)break;//非忙,无需等待了,直接退出.
+		res = STMFLASH_GetStatus();
+		if (res != 1)
+			break;						//Not busy, no wait, exit.
 		delay_us(1);
 		time--;
-	 }while(time);
-	 if(time==0)res=0xff;//TIMEOUT
-	 return res;
+	} while (time);
+	if (time == 0)
+		res = 0xff;						//TIMEOUT
+	return res;
 }
-//擦除页
-//paddr:页地址
-//返回值:执行情况
+//////////////////////////////////////////////////////////////////////////////////
+//Erase page
+//paddr: page address
+//Returns: Implementation
+//////////////////////////////////////////////////////////////////////////////////
 u8 STMFLASH_ErasePage(u32 paddr)
 {
-	u8 res=0;
-	res=STMFLASH_WaitDone(0X5FFF);//等待上次操作结束,>20ms    
-	if(res==0)
-	{ 
-		FLASH->CR|=1<<1;//页擦除
-		FLASH->AR=paddr;//设置页地址 
-		FLASH->CR|=1<<6;//开始擦除		  
-		res=STMFLASH_WaitDone(0X5FFF);//等待操作结束,>20ms  
-		if(res!=1)//非忙
+	u8 res = 0;
+	res = STMFLASH_WaitDone(0X5FFF);//Waiting for the end of the last operation,> 20ms
+	if (res == 0)
+	{
+		FLASH->CR |= 1 << 1;						//Page Erase
+		FLASH->AR = paddr;						//Settings page address
+		FLASH->CR |= 1 << 6;						//Begin erasing
+		res = STMFLASH_WaitDone(0X5FFF);	//Wait for the operation ends,> 20ms
+		if (res != 1)						//Non-busy
 		{
-			FLASH->CR&=~(1<<1);//清除页擦除标志.
+			FLASH->CR &= ~(1 << 1);						//Clear Page Erase flag.
 		}
 	}
 	return res;
 }
-//在FLASH指定地址写入半字
-//faddr:指定地址(此地址必须为2的倍数!!)
-//dat:要写入的数据
-//返回值:写入的情况
+//////////////////////////////////////////////////////////////////////////////////
+//FLASH half-word written in a specified address
+//faddr: specified address (this address must be a multiple of 2 !!)
+//dat: data to be written
+//Returns: the case of written
+//////////////////////////////////////////////////////////////////////////////////
 u8 STMFLASH_WriteHalfWord(u32 faddr, u16 dat)
 {
-	u8 res;	   	    
-	res=STMFLASH_WaitDone(0XFF);	 
-	if(res==0)//OK
+	u8 res;
+	res = STMFLASH_WaitDone(0XFF);
+	if (res == 0)						//OK
 	{
-		FLASH->CR|=1<<0;//编程使能
-		*(vu16*)faddr=dat;//写入数据
-		res=STMFLASH_WaitDone(0XFF);//等待操作完成
-		if(res!=1)//操作成功
+		FLASH->CR |= 1 << 0;						//Programming Enable
+		*(vu16*) faddr = dat;						//data input
+		res = STMFLASH_WaitDone(0XFF);						//Await completion
+		if (res != 1)						//Successful operation
 		{
-			FLASH->CR&=~(1<<0);//清除PG位.
+			FLASH->CR &= ~(1 << 0);						//Clear PG position.
 		}
-	} 
+	}
 	return res;
-} 
-//读取指定地址的半字(16位数据) 
-//faddr:读地址 
-//返回值:对应数据.
+}
+//////////////////////////////////////////////////////////////////////////////////
+//The read address specified half word (16 bits)
+//faddr: read address
+//Return Value: corresponding data.
+//////////////////////////////////////////////////////////////////////////////////
 u16 STMFLASH_ReadHalfWord(u32 faddr)
 {
-	return *(vu16*)faddr; 
+	return *(vu16*) faddr;
 }
-#if STM32_FLASH_WREN	//如果使能了写   
-//不检查的写入
-//WriteAddr:起始地址
-//pBuffer:数据指针
-//NumToWrite:半字(16位)数   
-void STMFLASH_Write_NoCheck(u32 WriteAddr,u16 *pBuffer,u16 NumToWrite)   
-{ 			 		 
+#if STM32_FLASH_WREN	//If enabled write
+//Do not check writing
+//WriteAddr: starting address
+//pBuffer: Pointer Data
+//NumToWrite: half-word (16-bit) number
+void STMFLASH_Write_NoCheck(u32 WriteAddr, u16 *pBuffer, u16 NumToWrite)
+{
 	u16 i;
-	for(i=0;i<NumToWrite;i++)
+	for (i = 0; i < NumToWrite; i++)
 	{
-		STMFLASH_WriteHalfWord(WriteAddr,pBuffer[i]);
-	  WriteAddr+=2;//地址增加2.
-	}  
-} 
-//从指定地址开始写入指定长度的数据
-//WriteAddr:起始地址(此地址必须为2的倍数!!)
-//pBuffer:数据指针
-//NumToWrite:半字(16位)数(就是要写入的16位数据的个数.)
+		STMFLASH_WriteHalfWord(WriteAddr, pBuffer[i]);
+		WriteAddr += 2;						//Address incremented by two.
+	}
+}
+//////////////////////////////////////////////////////////////////////////////////
+//Start writing data from the specified address length specified
+//WriteAddr: start address (this address must be a multiple of 2 !!)
+//pBuffer: Pointer Data
+//NumToWrite: half-word (16-bit) number (the number of 16-bit data is to be written.)
+//////////////////////////////////////////////////////////////////////////////////
 #if STM32_FLASH_SIZE<256
-#define STM_SECTOR_SIZE 1024 //字节
+#define STM_SECTOR_SIZE 1024 //byte
 #else 
 #define STM_SECTOR_SIZE	2048
 #endif
 
-u16 STMFLASH_BUF[STM_SECTOR_SIZE/2];//最多是2K字节
+u16 STMFLASH_BUF[STM_SECTOR_SIZE / 2];						//At most 2K bytes
 
-void STMFLASH_Write(u32 WriteAddr,u16 *pBuffer,u16 NumToWrite)	
+//////////////////////////////////////////////////////////////////////////////////
+void STMFLASH_Write(u32 WriteAddr, u16 *pBuffer, u16 NumToWrite)
 {
-	u32 secpos;	   //扇区地址
-	u16 secoff;	   //扇区内偏移地址(16位字计算)
-	u16 secremain; //扇区内剩余地址(16位字计算)	   
- 	u16 i;    
-	u32 offaddr;   //去掉0X08000000后的地址
-	if(WriteAddr<STM32_FLASH_BASE||(WriteAddr>=(STM32_FLASH_BASE+1024*STM32_FLASH_SIZE)))return;//非法地址
-	STMFLASH_Unlock();						//解锁
-	offaddr=WriteAddr-STM32_FLASH_BASE;		//实际偏移地址.
-	secpos=offaddr/STM_SECTOR_SIZE;			//扇区地址  0~127 for STM32F103RBT6
-	secoff=(offaddr%STM_SECTOR_SIZE)/2;		//在扇区内的偏移(2个字节为基本单位.)
-	secremain=STM_SECTOR_SIZE/2-secoff;		//扇区剩余空间大小   
-	if(NumToWrite<=secremain)secremain=NumToWrite;//不大于该扇区范围
-	while(1) 
-	{	
-		STMFLASH_Read(secpos*STM_SECTOR_SIZE+STM32_FLASH_BASE,STMFLASH_BUF,STM_SECTOR_SIZE/2);//读出整个扇区的内容
-		for(i=0;i<secremain;i++)//校验数据
+	u32 secpos;	   //Sector address
+	u16 secoff;	   //The sector offset address (16-bit word calculation)
+	u16 secremain; //Within a sector remaining addresses (16-bit word calculation)
+	u16 i;
+	u32 offaddr;   //After removing the address 0X08000000
+	if (WriteAddr < STM32_FLASH_BASE
+			|| (WriteAddr >= (STM32_FLASH_BASE + 1024 * STM32_FLASH_SIZE)))
+		return;   //Illegal Address
+	STMFLASH_Unlock();						//Unlock
+	offaddr = WriteAddr - STM32_FLASH_BASE;		//The actual offset.
+	secpos = offaddr / STM_SECTOR_SIZE;	//Sector address 0 ~ 127 for STM32F103RBT6
+	secoff = (offaddr % STM_SECTOR_SIZE) / 2;//Offset in the sector (2 bytes as a basic unit.)
+	secremain = STM_SECTOR_SIZE / 2 - secoff;		//The remaining sector space
+	if (NumToWrite <= secremain)
+		secremain = NumToWrite;		//It is not larger than the sector range
+	while (1)
+	{
+		STMFLASH_Read(secpos * STM_SECTOR_SIZE + STM32_FLASH_BASE, STMFLASH_BUF,
+		STM_SECTOR_SIZE / 2);	//Read the contents of the entire sector
+		for (i = 0; i < secremain; i++)		//Check data
 		{
-			if(STMFLASH_BUF[secoff+i]!=0XFFFF)break;//需要擦除  	  
+			if (STMFLASH_BUF[secoff + i] != 0XFFFF)
+				break;		//Be erased
 		}
-		if(i<secremain)//需要擦除
+		if (i < secremain)		//Be erased
 		{
-			STMFLASH_ErasePage(secpos*STM_SECTOR_SIZE+STM32_FLASH_BASE);//擦除这个扇区
-			for(i=0;i<secremain;i++)//复制
+			STMFLASH_ErasePage(secpos * STM_SECTOR_SIZE + STM32_FLASH_BASE);//Erase this sector
+			for (i = 0; i < secremain; i++)		//copy
 			{
-				STMFLASH_BUF[i+secoff]=pBuffer[i];	  
+				STMFLASH_BUF[i + secoff] = pBuffer[i];
 			}
-			STMFLASH_Write_NoCheck(secpos*STM_SECTOR_SIZE+STM32_FLASH_BASE,STMFLASH_BUF,STM_SECTOR_SIZE/2);//写入整个扇区  
-		}else STMFLASH_Write_NoCheck(WriteAddr,pBuffer,secremain);//写已经擦除了的,直接写入扇区剩余区间. 				   
-		if(NumToWrite==secremain)break;//写入结束了
-		else//写入未结束
+			STMFLASH_Write_NoCheck(secpos * STM_SECTOR_SIZE + STM32_FLASH_BASE,
+					STMFLASH_BUF, STM_SECTOR_SIZE / 2);	//Write the entire sector
+		}
+		else
+			STMFLASH_Write_NoCheck(WriteAddr, pBuffer, secremain);//Wrote already erased and written directly to the sector remaining zone.
+		if (NumToWrite == secremain)
+			break;		//Been finalized
+		else		//Write is not completed
 		{
-			secpos++;				//扇区地址增1
-			secoff=0;				//偏移位置为0 	 
-		   	pBuffer+=secremain;  	//指针偏移
-			WriteAddr+=secremain;	//写地址偏移	   
-		   	NumToWrite-=secremain;	//字节(16位)数递减
-			if(NumToWrite>(STM_SECTOR_SIZE/2))secremain=STM_SECTOR_SIZE/2;//下一个扇区还是写不完
-			else secremain=NumToWrite;//下一个扇区可以写完了
-		}	 
-	};	
-	STMFLASH_Lock();//上锁
+			secpos++;				//Sector address by 1
+			secoff = 0;				//Offset position is 0
+			pBuffer += secremain;  	//Pointer offset
+			WriteAddr += secremain;	//Write address offset
+			NumToWrite -= secremain;	//Bytes (16 bits) number down
+			if (NumToWrite > (STM_SECTOR_SIZE / 2))
+				secremain = STM_SECTOR_SIZE / 2;//The next sector or never finish
+			else
+				secremain = NumToWrite;	//Next sector can be finished
+		}
+	};
+	STMFLASH_Lock();	//Lock
 }
 #endif
 
-//从指定地址开始读出指定长度的数据
-//ReadAddr:起始地址
-//pBuffer:数据指针
-//NumToWrite:半字(16位)数
-void STMFLASH_Read(u32 ReadAddr,u16 *pBuffer,u16 NumToRead)   	
+//////////////////////////////////////////////////////////////////////////////////
+//Reading of the data from the specified address length specified
+//ReadAddr: starting address
+//pBuffer: Pointer Data
+//NumToWrite: half-word (16-bit) number
+//////////////////////////////////////////////////////////////////////////////////
+void STMFLASH_Read(u32 ReadAddr, u16 *pBuffer, u16 NumToRead)
 {
 	u16 i;
-	for(i=0;i<NumToRead;i++)
+	for (i = 0; i < NumToRead; i++)
 	{
-		pBuffer[i]=STMFLASH_ReadHalfWord(ReadAddr);//读取2个字节.
-		ReadAddr+=2;//偏移2个字节.	
+		pBuffer[i] = STMFLASH_ReadHalfWord(ReadAddr);	//Reading two bytes.
+		ReadAddr += 2;	//Offset 2 bytes.
 	}
 }
 
-//////////////////////////////////////////测试用///////////////////////////////////////////
-//WriteAddr:起始地址
-//WriteData:要写入的数据
-void Test_Write(u32 WriteAddr,u16 WriteData)   	
+//////////////////////////////////////////////////////////////////////////////////
+//WriteAddr: starting address
+//WriteData: data to be written
+//////////////////////////////////////////////////////////////////////////////////
+void Test_Write(u32 WriteAddr, u16 WriteData)
 {
-	STMFLASH_Write(WriteAddr,&WriteData,1);//写入一个字 
+	STMFLASH_Write(WriteAddr, &WriteData, 1);	//Write a letter
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

@@ -74,4 +74,8 @@ void assert_failed(uint8_t* file, uint32_t line);
 
 #endif /* __STM32F10x_CONF_H */
 
-/******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/
+/******************* (C) COPYRIGHT 2011 STMicroelectronics *********/
+
+
+
+//------------------End of File----------------------------

@@ -1,19 +1,40 @@
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+//      ____                      _____                  +---+
+//     / ___\                     / __ \                 | R |
+//    / /                        / /_/ /                 +---+
+//   / /   ________  ____  ___  / ____/___  ____  __   __
+//  / /  / ___/ __ `/_  / / _ \/ /   / __ \/ _  \/ /  / /
+// / /__/ /  / /_/ / / /_/  __/ /   / /_/ / / / / /__/ /
+// \___/_/   \__,_/ /___/\___/_/    \___ /_/ /_/____  /
+//                                                 / /
+//                                            ____/ /
+//                                           /_____/
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 #ifndef _CONTROL_H_
 #define _CONTROL_H_
 #include "stm32f10x.h"
 
 
-//#define Debug  //调试与否的条件编译
+//#define Debug // Debugging conditional compilation or not
 
-//待速转
+//Rotation speed to be
+// wait speed
 #define SLOW_THRO 200
-//定义飞机最大倾斜角度
+
+//The maximum angle of inclination of the plane defined
 #define  Angle_Max  40.0
+
 #define  YAW_RATE_MAX  180.0f/M_PI_F		//deg/s  
-//纠正姿态误差，可以用来抵抗重心偏移等带来的初始不平衡
-//#define  Rool_error_init   7      //如果飞机起飞朝左偏，Rool_error_init朝正向增大修改;朝右偏，Rool_error_init朝负向增大修改
-//#define  Pitch_error_init  -5      //如果飞机起飞朝前偏，Pitch_error_init朝负向增大修改;朝后偏，Pitch_error_init朝正向增大修改
-//定高部分
+
+// Correct the attitude error, which can be used to resist the
+//initial imbalance caused by center of gravity shift, etc.
+
+//#define Rool_error_init 7   // if the plane took off to the left bias, Rool_error_init forward towards increasing the modification; rightward bias, Rool_error_init modify increases in the negative direction
+//#define Pitch_error_init -5 // if the plane took off forward biased,   Pitch_error_init modify increases in the negative direction; rearward bias, Pitch_error_init forward towards increased modification
+//Given the high part
 #define LAND_SPEED						1.2f		//m/s^2
 #define ALT_VEL_MAX 					4.0f
 
@@ -26,7 +47,7 @@ extern float altLand;
 extern uint8_t isAltLimit;
 extern float thrustZSp,thrustZInt;
 
-// PID结构体
+//PID structure
 typedef struct
 {
     float P;
@@ -45,11 +66,11 @@ typedef struct
 }PID_Typedef;
 
 
-//写入Flash参数结构体
+//Flash write parameter structure
 typedef struct
 {
-  u16 WriteBuf[10];       //写入flash的临时数组
-  u16 ReadBuf[10];        //读取Flash的临时数组
+  u16 WriteBuf[10];       //Temporary array of write flash
+  u16 ReadBuf[10];        //Flash reads the temporary array
   
 }Parameter_Typedef;
 
@@ -70,16 +91,17 @@ float estimateHoverThru(void);
 
 void SetHeadFree(uint8_t on);
 
-extern u16 PIDWriteBuf[3];//写入flash的临时数字，由NRF24L01_RXDATA[i]赋值 
+// write the temporary number written in flash, assigned by NRF24L01_RXDATA [i]
+extern u16 PIDWriteBuf[3];
 
-extern PID_Typedef pitch_angle_PID;	  //pitch角度环的PID
-extern PID_Typedef pitch_rate_PID;		//pitch角速率环的PID
+extern PID_Typedef pitch_angle_PID;
+extern PID_Typedef pitch_rate_PID;
 
-extern PID_Typedef roll_angle_PID;    //roll角度环的PID
-extern PID_Typedef roll_rate_PID;     //roll角速率环的PID
+extern PID_Typedef roll_angle_PID;
+extern PID_Typedef roll_rate_PID;
 
-extern PID_Typedef yaw_angle_PID;     //yaw角度环的PID  
-extern PID_Typedef yaw_rate_PID;      //yaw的角速率环的PID  
+extern PID_Typedef yaw_angle_PID;
+extern PID_Typedef yaw_rate_PID;
 
 extern PID_Typedef	alt_PID;
 extern PID_Typedef alt_vel_PID;
@@ -91,4 +113,5 @@ extern float gyroyGloble;
 extern volatile unsigned char motorLock;
 #endif
 
+//------------------End of File----------------------------
 

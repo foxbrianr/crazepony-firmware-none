@@ -1,22 +1,40 @@
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+//      ____                      _____                  +---+
+//     / ___\                     / __ \                 | R |
+//    / /                        / /_/ /                 +---+
+//   / /   ________  ____  ___  / ____/___  ____  __   __
+//  / /  / ___/ __ `/_  / / _ \/ /   / __ \/ _  \/ /  / /
+// / /__/ /  / /_/ / / /_/  __/ /   / /_/ / / / / /__/ /
+// \___/_/   \__,_/ /___/\___/_/    \___ /_/ /_/____  /
+//                                                 / /
+//                                            ____/ /
+//                                           /_____/
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #include "config.h"
 #include "extern_variable.h"
 
 
 
-char SysClock;       //申请存储系统时钟变量，单位MHz
+// Application storage system clock variable, unit MHz
+char SysClock;
 
 /********************************************
-           系统中断优先级配置
-功能：
-1.各个中断优先级配置函数统一封装为：中断优先级配置初始化
+System interrupt priority configuration
+Features:
+1. Each interrupt priority configuration function
+	is uniformly encapsulated as: interrupt priority configuration initialization
 ********************************************/
 void NVIC_INIT(void)
 {
-    TimerNVIC_Configuration();//定时器中断配置
-    UART1NVIC_Configuration();//串口1中断配置
+    TimerNVIC_Configuration();
+    UART1NVIC_Configuration();
 }
-//不能在这里执行所有外设复位!否则至少引起串口不工作.
-//把所有时钟寄存器复位
+// ***********************************************************************************
+// Cannot perform reset of all peripherals here!
+// Otherwise at least the serial port will not work.
+// Reset all clock registers
 void MYRCC_DeInit(void)
 {
     RCC->APB1RSTR = 0x00000000;//复位结束
@@ -96,11 +114,11 @@ char SystemClock_HSE(u8 PLL)
 }
 
 /********************************************
-              开机LED的各种状态
+ * Various states of the boot LED
 ********************************************/
 void PowerOn()
 {
-    char i;            //循环变量
+    uint8_t i;            //循环变量
 
     for(i=0; i<4; i++) //循环闪烁4次
     {
@@ -113,7 +131,7 @@ void PowerOn()
         LedB_on;
         LedC_off;
         LedD_off;
-        Delay(900000);
+        Delay(1900000);
         LedA_off;
         LedB_off;
         LedC_on;
@@ -123,7 +141,7 @@ void PowerOn()
         LedB_off;
         LedC_off;
         LedD_on;
-        Delay(900000);
+        Delay(1900000);
     }
 
     for(i=0; i<3; i++) //解锁成功，快速闪烁3次提示

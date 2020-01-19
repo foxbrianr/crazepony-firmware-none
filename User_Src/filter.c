@@ -17,6 +17,8 @@ static float           _b11;
 static float           _b21;
 static float           _delay_element_11;        // buffered sample -1
 static float           _delay_element_21;        // buffered sample -2
+
+
 void LPF2pSetCutoffFreq_1(float sample_freq, float cutoff_freq)
 {
     float fr =0;
@@ -72,6 +74,8 @@ static float           _b12;
 static float           _b22;
 static float           _delay_element_12;        // buffered sample -1
 static float           _delay_element_22;        // buffered sample -2
+
+
 void LPF2pSetCutoffFreq_2(float sample_freq, float cutoff_freq)
 {
     float fr =0;
@@ -127,6 +131,8 @@ static float           _b13;
 static float           _b23;
 static float           _delay_element_13;        // buffered sample -1
 static float           _delay_element_23;        // buffered sample -2
+
+
 void LPF2pSetCutoffFreq_3(float sample_freq, float cutoff_freq)
 {
     float fr =0;

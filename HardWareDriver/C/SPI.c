@@ -9,20 +9,22 @@
                                                  / /
                                             ____/ /
                                            /_____/
+                                            *
 moto.c file
-编写者：小马  (Camel)
-作者E-mail：375836945@qq.com
-编译环境：MDK-Lite  Version: 4.23
-初版时间: 2014-01-28
-功能：
-1.SPI1初始化
-2.供NRF24L01接口
+Written by: Camel
+Author E-mail: 375836945@qq.com
+Compilation environment: MDK-Lite Version: 4.23
+Initial release time: 2014-01-28
+Features:
+1.SPI1 initialization
+2.For NRF24L01 interface
 ------------------------------------
 */
-#include "spi.h"
+#include "SPI.h"
 #include "UART1.h"
 #include "stdio.h"
 
+//////////////////////////////////////////////////////////////////////////////////
 void SPI1_INIT(void)
 {
     SPI_InitTypeDef SPI_InitStructure; 
@@ -50,8 +52,6 @@ void SPI1_INIT(void)
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP; 
     GPIO_Init(GPIOA, &GPIO_InitStructure);	
     
- 
-    
     SPI_CSN_H();
     
     SPI_InitStructure.SPI_Direction = SPI_Direction_2Lines_FullDuplex; //双线全双工 
@@ -70,6 +70,7 @@ void SPI1_INIT(void)
 }
 
 
+//////////////////////////////////////////////////////////////////////////////////
 u8 SPI_RW(u8 dat) 
 { 
     while (SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_TXE) == RESET); 

@@ -1,3 +1,17 @@
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+//      ____                      _____                  +---+
+//     / ___\                     / __ \                 | R |
+//    / /                        / /_/ /                 +---+
+//   / /   ________  ____  ___  / ____/___  ____  __   __
+//  / /  / ___/ __ `/_  / / _ \/ /   / __ \/ _  \/ /  / /
+// / /__/ /  / /_/ / / /_/  __/ /   / /_/ / / / / /__/ /
+// \___/_/   \__,_/ /___/\___/_/    \___ /_/ /_/____  /
+//                                                 / /
+//                                            ____/ /
+//                                           /_____/
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #ifndef _Led_H_
 #define _Led_H_
 #include "stm32f10x.h"
@@ -5,30 +19,30 @@
 
 //
 #define LED_NUM 4
-#define LA	    0x01
+#define LA      0x01
 #define LB      0x02
 #define LC      0x04
 #define LD      0x08
 //
-#define E_READY 		   0
-#define E_CALI			   1
-#define E_BAT_LOW		   2
-#define E_CALI_FAIL	   3
-#define E_LOST_RC 	   4
+#define E_READY        0
+#define E_CALI         1
+#define E_BAT_LOW      2
+#define E_CALI_FAIL    3
+#define E_LOST_RC      4
 #define E_AUTO_LANDED  5
 #define E_BatChg       6
 
 
 typedef union{
-	uint8_t byte;
-	struct 
-	{
-			uint8_t A	:1;
-		  uint8_t B	:1;
-			uint8_t C	:1;
-		  uint8_t D	:1;
-			uint8_t reserved	:4;
-	}bits;
+  uint8_t byte;
+  struct
+  {
+      uint8_t A  :1;
+      uint8_t B  :1;
+      uint8_t C  :1;
+      uint8_t D  :1;
+      uint8_t reserved  :4;
+  }bits;
 }LEDBuf_t;
 
 typedef struct Led_tt
@@ -67,3 +81,6 @@ void LEDFSM(void);
 
 #endif
 
+
+
+//------------------End of File----------------------------

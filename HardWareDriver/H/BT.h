@@ -7,13 +7,14 @@
 #define false !true
 
 #define BT_BAUD_Set     115200
-#define BT_NAME 				"Crazepony"
-#define BT_PIN 				  "1234"
+#define BT_NAME         "CrazePony"
+#define BT_PIN          "1234"
 //AT 字符串
-#define BT_BAUD_AT		 "OK+NAME:" BT_NAME
+#define BT_BAUD_AT      "OK+NAME:" BT_NAME
 
 #define BT_on()      {GPIO_SetBits(GPIOB, GPIO_Pin_2);printf("BT power init success...\r\n");}
-#define BT_off()     {GPIO_ResetBits(GPIOB, GPIO_Pin_2);printf("BT power close success...\r\n");}//宏定义蓝牙开关
+#define BT_off()     {GPIO_ResetBits(GPIOB, GPIO_Pin_2);printf("BT power close success...\r\n");}
+// Macro defines the Bluetooth switch
 
 #define CmdreturnLength 20
 
@@ -23,20 +24,20 @@
 #define BT_NAMEmax  10
 #define BT_PINmax   10
 
-
 typedef struct
 {
- u8 Name[BT_NAMEmax];
- u32 Baud;
- u8 PinCode[BT_PINmax];
-}BTtype;
+	u8 Name[BT_NAMEmax];
+	u32 Baud;
+	u8 PinCode[BT_PINmax];
+} BTtype;
 
-
-
-void BT_PowerInit(void);   //蓝牙透传电源初始化
-void BT_ATcmdWrite(void);//蓝牙写参数
+void BT_PowerInit(void);   // Bluetooth transparent power initialization
+void BT_ATcmdWrite(void);  // Bluetooth write parameters
 
 extern float BTstate;
 
 #endif
 
+
+
+//------------------End of File----------------------------
