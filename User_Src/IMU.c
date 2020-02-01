@@ -23,12 +23,15 @@ Author:		祥 、小马、nieyong
 imu_t imu= {0};
 uint8_t imuCaliFlag=0;
 
-//函数名：IMU_Init(void)
-//描述：姿态解算融合初始化函数
-//现在使用软件解算，不再使用MPU6050的硬件解算单元DMP，IMU_SW在SysConfig.h中定义
+//---------------------------------------------------------------------------------------------------
+// Function name: IMU_Init (void)
+// Description: Fusion initialization function for attitude solution
+// Now use software to solve, no longer use the hardware solution unit DMP of MPU6050,
+// IMU_SW is defined in SysConfig.h
 void IMU_Init(void)
 {
-#ifdef IMU_SW		//软解需要先校陀螺
+#ifdef IMU_SW
+	// Soft solution needs to calibrate the gyro first
     imu.ready=0;
 #else
     imu.ready=1;
@@ -43,12 +46,12 @@ void IMU_Init(void)
     LPF2pSetCutoffFreq_6(IMU_SAMPLE_RATE,IMU_FILTER_CUTOFF_FREQ);
 }
 
-
-
-//函数名：IMU_Process(void)
-//描述：姿态解算融合函数
-//该函数对姿态的融合是硬件解算，也就是基于DMP数据进行的，Crazepony现在不使用DMP硬件解算
-//Crazepony现在使用软件解算，即函数IMUSO3Thread()
+//---------------------------------------------------------------------------------------------------
+// Function name: IMU_Process (void)
+// Description: Posture solution fusion function
+// The function's fusion of the attitude is a hardware solution, which is based on DMP data.
+// Crazepony does not use DMP hardware solution now.
+// Crazepony now uses software to solve, that is, the function IMUSO3Thread ()
 void IMU_Process(void)
 {
     //read ADC
@@ -87,6 +90,7 @@ void IMU_Process(void)
 }
 
 
+//---------------------------------------------------------------------------------------------------
 //should place to a level surface and keep it stop for 1~2 second
 //return 1 when finish
 uint8_t IMU_Calibrate(void)
@@ -152,6 +156,7 @@ uint8_t IMU_Calibrate(void)
 }
 
 
+//---------------------------------------------------------------------------------------------------
 #define SENSOR_MAX_G 8.0f		//constant g		// tobe fixed to 8g. but IMU need to  correct at the same time
 #define SENSOR_MAX_W 2000.0f	//deg/s
 #define ACC_SCALE  (SENSOR_MAX_G/32768.0f)
@@ -185,8 +190,10 @@ void ReadIMUSensorHandle(void)
 
 }
 
-//检测IMU是否ready，校准好
-//需要将四轴放水平
+
+//---------------------------------------------------------------------------------------------------
+// Check if IMU is ready and calibrate well
+// Need to level the four axes
 #define ACCZ_ERR_MAX  0.05		//m/s^2
 #define CHECK_TIME 5
 uint8_t IMUCheck(void)
@@ -212,13 +219,11 @@ uint8_t IMUCheck(void)
 
 }
 
-/*
-in standard sequence , roll-pitch-yaw , x-y-z
-angle in rad
-get DCM for ground to body
-
-*/
-
+//---------------------------------------------------------------------------------------------------
+// in standard sequence , roll-pitch-yaw , x-y-z
+// angle in rad
+// get DCM for ground to body
+//
 static void eular2DCM(float DCM[3][3],float roll,float pitch,float yaw)
 {
     float cosx, sinx, cosy, siny, cosz, sinz;

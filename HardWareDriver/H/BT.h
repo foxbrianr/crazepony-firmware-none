@@ -34,6 +34,8 @@ typedef struct
 void BT_PowerInit(void);   // Bluetooth transparent power initialization
 void BT_ATcmdWrite(void);  // Bluetooth write parameters
 
+void Uart1SendaBTCmd(const char *p);
+
 extern float BTstate;
 
 #endif

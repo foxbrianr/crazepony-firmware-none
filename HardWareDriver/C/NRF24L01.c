@@ -26,12 +26,14 @@
 #include "delay.h"
 #include "UART1.h"
 #include "stdio.h"
+
 uint8_t NRF24L01_RXDATA[RX_PLOAD_WIDTH]; //nrf24l01 received data 
 uint8_t NRF24L01_TXDATA[RX_PLOAD_WIDTH]; //nrf24l01 data needs to be sent
 
 // modify the receive and transmit addresses, can be used for a plurality of aircraft flying in the same area, the data undisturbed
 u8 RX_ADDRESS[RX_ADR_WIDTH] = { 0x34, 0xc3, 0x10, 0x10, 0x00 };	// address received
 
+// --------------------------------------------------------------
 // write register
 uint8_t NRF_Write_Reg(uint8_t reg, uint8_t value) {
 	uint8_t status;
@@ -42,6 +44,7 @@ uint8_t NRF_Write_Reg(uint8_t reg, uint8_t value) {
 	return status;
 }
 
+// --------------------------------------------------------------
 // read register
 uint8_t NRF_Read_Reg(uint8_t reg) {
 	uint8_t reg_val;
@@ -52,6 +55,7 @@ uint8_t NRF_Read_Reg(uint8_t reg) {
 	return reg_val;
 }
 
+// --------------------------------------------------------------
 // write buffer
 uint8_t NRF_Write_Buf(uint8_t reg, uint8_t *pBuf, uint8_t uchars) {
 	uint8_t i;
@@ -65,6 +69,7 @@ uint8_t NRF_Write_Buf(uint8_t reg, uint8_t *pBuf, uint8_t uchars) {
 	return status;
 }
 
+// --------------------------------------------------------------
 // read buffer
 uint8_t NRF_Read_Buf(uint8_t reg, uint8_t *pBuf, uint8_t uchars) {
 	uint8_t i;
@@ -78,6 +83,7 @@ uint8_t NRF_Read_Buf(uint8_t reg, uint8_t *pBuf, uint8_t uchars) {
 	return status;
 }
 
+// --------------------------------------------------------------
 // write packet
 void NRF_TxPacket(uint8_t *tx_buf, uint8_t len) {
 	SPI_CE_L(); // StandBy I mode
@@ -85,6 +91,7 @@ void NRF_TxPacket(uint8_t *tx_buf, uint8_t len) {
 	SPI_CE_H(); // set high CE, excitation data transmission
 }
 
+// --------------------------------------------------------------
 //initialization
 char NRF24L01_INIT(void) {
 	SPI1_INIT();
@@ -97,6 +104,7 @@ char NRF24L01_INIT(void) {
 	NRFmatching();
 }
 
+// --------------------------------------------------------------
 // receive mode
 void SetRX_Mode(void) {
 	SPI_CE_L();
@@ -113,6 +121,7 @@ void SetRX_Mode(void) {
 	//printf("NRF24L01 Set to Receiving Mode,RX_ADDR 0x%x...\r\n",RX_ADDRESS[4]);
 }
 
+// --------------------------------------------------------------
 // query break
 void Nrf_Irq(void) {
 	uint8_t sta = NRF_Read_Reg(NRF_READ_REG + NRFRegSTATUS);
@@ -126,46 +135,50 @@ void Nrf_Irq(void) {
 
 }
 
+// --------------------------------------------------------------
 // receiver function
 u8 NRF24L01_RxPacket(u8 *rxbuf) {
 	u8 sta;
-	//SPI2_SetSpeed(SPI_SPEED_4); //spi速度为9Mhz（24L01的最大SPI时钟为10Mhz）
-	sta = NRF_Read_Reg(NRFRegSTATUS);  //读取状态寄存器的值
-	NRF_Write_Reg(NRF_WRITE_REG + NRFRegSTATUS, sta); //清除TX_DS或MAX_RT中断标志
-	if (sta & RX_OK) //接收到数据
+	//SPI2_SetSpeed(SPI_SPEED_4); // spi speed is 9Mhz (the maximum SPI clock of 24L01 is 10Mhz)
+	sta = NRF_Read_Reg(NRFRegSTATUS);  // Read the value of the status register
+	NRF_Write_Reg(NRF_WRITE_REG + NRFRegSTATUS, sta); // Clear TX_DS or MAX_RT interrupt flag
+	if (sta & RX_OK)// received data
 	{
-		NRF_Read_Buf(RD_RX_PLOAD, rxbuf, RX_PLOAD_WIDTH); //读取数据
-		NRF_Write_Reg(FLUSH_RX, 0xff); //清除RX FIFO寄存器
+		NRF_Read_Buf(RD_RX_PLOAD, rxbuf, RX_PLOAD_WIDTH);// Read data
+		NRF_Write_Reg(FLUSH_RX, 0xff); // Clear the RX FIFO register
 		return 0;
 	}
-	return 1; //没收到任何数据
+	return 1; // No data received
 }
 
-//判断SPI接口是否接入NRF芯片是否可用
+// --------------------------------------------------------------
+// Check whether the SPI interface is connected
+// and the NRF chip is available
 u8 NRF24L01_Check(void) {
 	u8 buf[5] = { 0xC2, 0xC2, 0xC2, 0xC2, 0xC2 };
 	u8 buf1[5];
 	u8 i = 0;
 
-	/*写入5 个字节的地址.  */
+	// Write a 5-byte address.
 	NRF_Write_Buf(NRF_WRITE_REG + TX_ADDR, buf, 5);
 
-	/*读出写入的地址 */
+	// Read back address
 	NRF_Read_Buf(TX_ADDR, buf1, 5);
 
-	/*比较*/
+	// Compare address
 	for (i = 0; i < 5; i++) {
 		if (buf1[i] != 0xC2)
 			break;
 	}
-
+	// MCU and NRF successfully connected
 	if (i == 5) {
 		printf("NRF24L01 found...\r\n");
 		return 1;
-	}        //MCU 与NRF 成功连接
+	}
+	// MCU and NRF failed to connect
 	else {
 		printf("NRF24L01 check failed...\r\n");
 		return 0;
-	}        //MCU与NRF不正常连接
+	}
 }
 

@@ -28,7 +28,8 @@ uint8_t pcCmdFlag = 0;
 #define PC_PID_YAW		0x12
 #define PC_PID_ALT		0x14
 
-typedef struct DataPackage_tt {
+typedef struct DataPackage_tt
+{
 	uint8_t header[2];
 	uint8_t cmd;
 	uint8_t len;
@@ -37,53 +38,65 @@ typedef struct DataPackage_tt {
 } DataPackage_t;
 
 //注意地址对齐问题！！
-HawkerPacket_t up = { { 0xAA, 0xAA }, 0x01, 18 };	//upload packet
-DataPackage_t up2 = { { 0xAA, 0xAA }, 0x02, 30, { 0 } };
+HawkerPacket_t up =
+{
+{ 0xAA, 0xAA }, 0x01, 18 };	//upload packet
+DataPackage_t up2 =
+{
+{ 0xAA, 0xAA }, 0x02, 30,
+{ 0 } };
 
 static void EndianConvert(uint8_t arr[], uint8_t len);
 
 //分包发送，分散cpu占用时间
-static uint8_t sendPCBuf[64] = { 0xAA, 0xAA, 0x01, 0x14, 0, 100, 0, 200, 0, 130,
-		0, 0, 0, 100, 0, 0, 0, 200, 0, 0, 0, 30, 0, 10, 0x6B };
+static uint8_t sendPCBuf[64] =
+{ 0xAA, 0xAA, 0x01, 0x14, 0, 100, 0, 200, 0, 130, 0, 0, 0, 100, 0, 0, 0, 200, 0,
+		0, 0, 30, 0, 10, 0x6B };
 
 //------------------New Send --------------------//
 #define TEST_LEN 1+5
 //uint8_t testData[0x0C+5]={0xAA,0xAF,0x10,0x0C,0,1,0,0,0,0,0,0,0,0,0,0,(uint8_t)(0xAA+0xAF+0x10+0x0C+0x01)};
-uint8_t testData[1 + 5] = { 0xAA, 0xAF, 0x02, 0x01, 0x01, (uint8_t) (0xAA + 0xAF
-		+ 0x02 + 1 + 1) };
+uint8_t testData[1 + 5] =
+{ 0xAA, 0xAF, 0x02, 0x01, 0x01, (uint8_t) (0xAA + 0xAF + 0x02 + 1 + 1) };
 static uint8_t sendCnt = 0;
 static uint8_t checksum;
 
 extern uint8_t gParamsSaveEEPROMRequset;
 
-void testCommPC(void) {
+void testCommPC(void)
+{
 	uint8_t i = 0;
 	for (i = 0; i < TEST_LEN; i++)
 		CommPC(testData[i]);
 }
 
-static void BufAdd8Chk(uint8_t a) {
+static void BufAdd8Chk(uint8_t a)
+{
 	//UartBuf_WD(&UartTxbuf,_x);
 	sendPCBuf[sendCnt++] = a;
 	checksum += a;
 }
-static void BufAddInt16(int16_t a) {
+static void BufAddInt16(int16_t a)
+{
 	BufAdd8Chk((uint8_t) (a >> 8));
 	BufAdd8Chk((uint8_t) (a & 0xff));
 }
-static void BufAddArr(uint8_t *dat, uint8_t len) {
+static void BufAddArr(uint8_t *dat, uint8_t len)
+{
 	uint8_t i;
 	for (i = 0; i < len; i++)
 		BufAdd8Chk(dat[i]);
 }
-static void BufUpload(void) {
+static void BufUpload(void)
+{
 	UartSendBuffer(sendPCBuf, sendCnt);
 	sendCnt = 0;
 	checksum = 0;
 }
 
-//根据不同命令字上传
-void CommPCUpload(uint8_t cmd) {
+// Upload according to different command words
+void CommPCUpload(uint8_t cmd)
+{
 	//	UartSendBuffer(testData,6);
 
 //		sendPCBuf[0]=0xAA;
@@ -94,7 +107,8 @@ void CommPCUpload(uint8_t cmd) {
 	BufAdd8Chk(0xAA);
 	BufAdd8Chk(0xAA);
 	BufAdd8Chk(cmd);
-	switch (cmd) {
+	switch (cmd)
+	{
 	case PC_PID_PITCH:
 		BufAdd8Chk(0x0C);	//len
 		BufAddInt16((int16_t) ((pitch_rate_PID.P * 100)));
@@ -144,17 +158,24 @@ void CommPCUpload(uint8_t cmd) {
 //接收
 
 static uint8_t cmd = 0, len = 0, chkSum = 0;
+
 #define DAT_MAX_LEN 32
-static uint8_t datBuf[DAT_MAX_LEN] = { 0 };
+static uint8_t datBuf[DAT_MAX_LEN] =
+{ 0 };
+
 static uint8_t datCnt = 0;
 
-enum {
+enum
+{
 	IDLE = 0, HEADER1, HEADER2, CMD, LEN, DATA, CHK
 };
-static uint8_t ps = IDLE;
-void CommPC(uint8_t c) {
 
-	switch (ps) {
+static uint8_t ps = IDLE;
+void CommPC(uint8_t c)
+{
+
+	switch (ps)
+	{
 	case IDLE:
 		chkSum = 0;
 		if (c == 0xAA)
@@ -177,7 +198,8 @@ void CommPC(uint8_t c) {
 		break;
 	case DATA:
 
-		if (datCnt < len) {
+		if (datCnt < len)
+		{
 			datBuf[datCnt++] = c;
 			chkSum += c;
 		}
@@ -185,7 +207,8 @@ void CommPC(uint8_t c) {
 			ps = CHK;
 		break;
 	case CHK:
-		if (chkSum == c) {
+		if (chkSum == c)
+		{
 			pcCmdFlag = 1;	//specific cmd process executed in main, not in irq
 			//		CommPCProcessCmd();//process cmd
 			datCnt = 0;
@@ -198,12 +221,14 @@ void CommPC(uint8_t c) {
 }
 
 // Handle commands from PC
-void CommPCProcessCmd(void) {
+void CommPCProcessCmd(void)
+{
 	//UartBufClear(&UartTxbuf);	//以备发送
-	switch (cmd) {
+	switch (cmd)
+	{
 	case PC_REQ_PID:
 		if (datBuf[0] == 0x01)	//read PID
-				{
+		{
 			CommPCUpload(PC_PID_PITCH);
 			CommPCUpload(PC_PID_ROLL);
 			CommPCUpload(PC_PID_YAW);
@@ -271,7 +296,8 @@ void CommPCProcessCmd(void) {
 
 }
 
-void ReturnPIDHead(uint8_t pidType) {
+void ReturnPIDHead(uint8_t pidType)
+{
 	checksum = 0;
 	sendCnt = 0;
 	BufAdd8Chk(0xAA);
@@ -286,7 +312,8 @@ void ReturnPIDHead(uint8_t pidType) {
 
 //--- a little zzz
 //interface with hawker
-void DebugUploadHandle(void) {
+void DebugUploadHandle(void)
+{
 	up.roll.val = imu.roll * 100;
 	up.pitch.val = imu.pitch * 100;
 	up.yaw.val = imu.yaw * 100;
@@ -307,7 +334,8 @@ void DebugUploadHandle(void) {
 
 }
 //arm is high in front. convert to fit upper.
-static void EndianConvert(uint8_t arr[], uint8_t len) {
+static void EndianConvert(uint8_t arr[], uint8_t len)
+{
 	uint8_t arrS[8], i;
 	for (i = 0; i < len; i++)
 		arrS[i] = arr[i];
@@ -315,7 +343,8 @@ static void EndianConvert(uint8_t arr[], uint8_t len) {
 		arr[len - 1 - i] = arrS[i];
 }
 
-static void DebugUploadHandle2() {
+static void DebugUploadHandle2()
+{
 	checksum = 0;
 //		UartBufClear(&UartTxbuf);
 	BufAdd8Chk(0xAA);
@@ -348,7 +377,8 @@ static void DebugUploadHandle2() {
 
 }
 
-static void DebubUploadHandle3() {
+static void DebubUploadHandle3()
+{
 	uint8_t i;
 	up2.cmd = 0x08;
 	up2.len = 6 * 2;
@@ -374,18 +404,20 @@ static void DebubUploadHandle3() {
 	UartSendBuffer(&(up2.sum), 1);
 }
 
-void CommPCUploadHandle() {
+void CommPCUploadHandle()
+{
 	static uint8_t pkgDivCnt = 0;
 
 	uint8_t i = 0;
 
 	pkgDivCnt++;
-	if (pkgDivCnt > 2) {
+	if (pkgDivCnt > 2)
+	{
 		pkgDivCnt = 0;
 	}
 
 	if (pkgDivCnt == 0)	//div time to send different datapacket to avoid use too much cpu at a time
-			{
+	{
 		DebugUploadHandle();
 		for (i = 0; i < 10; i++)		//solove data in ram address align
 			sendPCBuf[i] = *((uint8_t*) (&up) + i);
@@ -397,9 +429,13 @@ void CommPCUploadHandle() {
 		for (i = 0; i < 22; i++)
 			sendPCBuf[22] += sendPCBuf[i];
 		UartSendBuffer(sendPCBuf, 23);
-	} else if (pkgDivCnt == 1) {
+	}
+	else if (pkgDivCnt == 1)
+	{
 		DebugUploadHandle2();
-	} else if (pkgDivCnt == 2) {
+	}
+	else if (pkgDivCnt == 2)
+	{
 		DebubUploadHandle3();
 	}
 }

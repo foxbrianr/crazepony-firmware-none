@@ -124,7 +124,6 @@ int main(void) {
 	// the reference timing of the main loop of the flight control
 	TIM4_Init(SysClock, 1000);
 
-	MotorPwmFlash(10, 10, 10, 10);
 
 	altCtrlMode = MANUAL;
 
@@ -136,20 +135,32 @@ int main(void) {
 	LedB_off;
 	LedC_on;
 	LedD_off;
-
-	MotorPwmFlash(100, 100, 100, 100);
+	MotorPwmFlash(0, 10, 0, 10);
 	delay_ms(1000);
 
 	LedB_on;
 	LedC_off;
 	LedD_on;
 	LedA_off;
+	MotorPwmFlash(10, 0, 10, 0);
+	delay_ms(1000);
+
+
+	LedA_on;
+	LedB_on;
+	LedC_on;
+	LedD_on;
 
 	MotorPwmFlash(0, 0, 0, 0);
 	delay_ms(1000);
 
+	LedA_off;
+	LedB_off;
+	LedC_off;
+	LedD_off;
 	// Flight control control main loop
 	while (1) {
+
 
 #if 1
 		/*Use DMP in MPU6050 for imu , it's accurate but slow and time costing and time unstable */
@@ -247,6 +258,10 @@ execTime [0] = micros () - startTime [0]; // measuring task execution time, CPU 
 
 		//10Hz loop
 		if (loop10HzFlag) {
+
+			// Change the name of Bluetooth to Crazepony
+			//Uart1SendaBTCmd(ATcmdNameSet);
+
 			loop10HzFlag = 0;
 			realExecPrd[2] = micros() - startTime[2];
 			startTime[2] = micros();
@@ -257,7 +272,9 @@ execTime [0] = micros () - startTime [0]; // measuring task execution time, CPU 
 				BatteryCheck();
 			}
 
+			// -------------------------------------------------------------------------------------
 			// phone APP have requested flight control information is sent to the mobile phone APP
+			// -------------------------------------------------------------------------------------
 			if (flyLogApp) {
 				CommAppUpload();
 				flyLogApp = 0;

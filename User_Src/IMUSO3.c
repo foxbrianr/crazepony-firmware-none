@@ -9,9 +9,11 @@
                                                  / /
                                             ____/ /
                                            /_____/
-Filename:	IMUSO3.c
-Author:		祥 、nieyong
-说明：这是Crazepony软件姿态解算融合文件，Crazepony已经不再使用DMP硬件解算
+
+Filename: IMUSO3.c
+Author: Xiang, nieyong
+Note: This is a fusion file of Crazepony software attitude solution.
+Crazepony no longer uses DMP hardware to solve
 Part of this algrithom is referred from pixhawk.
 ------------------------------------
 */
@@ -32,9 +34,9 @@ static float q2q2, q2q3;
 static float q3q3;
 static uint8_t bFilterInit = 0;
 
-//函数名：invSqrt(void)
-//描述：求平方根的倒数
-//该函数是经典的Carmack求平方根算法，效率极高，使用魔数0x5f375a86
+// Function name: invSqrt (void)
+// Description: Find the inverse of the square root
+// This function is a classic Carmack square root algorithm, which is extremely efficient, using the magic number 0x5f375a86
 static float invSqrt(float number)
 {
     volatile long i;
@@ -99,11 +101,10 @@ static void NonlinearSO3AHRSinit(float ax, float ay, float az, float mx, float m
     q2q3 = q2 * q3;
     q3q3 = q3 * q3;
 }
-
-//函数名：NonlinearSO3AHRSupdate()
-//描述：姿态解算融合，是Crazepony和核心算法
-//使用的是Mahony互补滤波算法，没有使用Kalman滤波算法
-//改算法是直接参考pixhawk飞控的算法，可以在Github上看到出处
+// Function name: NonlinearSO3AHRSupdate ()
+// Description: Attitude solution fusion is Crazepony and core algorithm
+// Mahony complementary filtering algorithm is used, Kalman filtering algorithm is not used
+// The modified algorithm is a direct reference to the algorithm of pixhawk flight control, you can see the source on Github
 //https://github.com/hsteinhaus/PX4Firmware/blob/master/src/modules/attitude_estimator_so3/attitude_estimator_so3_main.cpp
 static void NonlinearSO3AHRSupdate(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz, float twoKp, float twoKi, float dt)
 {
@@ -148,7 +149,7 @@ static void NonlinearSO3AHRSupdate(float gx, float gy, float gz, float ax, float
         halfez += (mx * halfwy - my * halfwx);
     }
 
-    //增加一个条件：  加速度的模量与G相差不远时。 0.75*G < normAcc < 1.25*G
+    // Add a condition: When the modulus of acceleration is not far from G. 0.75 * G <normAcc <1.25 * G
     // Compute feedback only if accelerometer measurement valid (avoids NaN in accelerometer normalisation)
     if(!((ax == 0.0f) && (ay == 0.0f) && (az == 0.0f)))
     {
@@ -234,11 +235,10 @@ static void NonlinearSO3AHRSupdate(float gx, float gy, float gz, float ax, float
 #define so3_comp_params_Kp 1.0f
 #define so3_comp_params_Ki  0.05f
 
-
-//函数名：IMUSO3Thread(void)
-//描述：姿态软件解算融合函数
-//该函数对姿态的融合是软件解算，Crazepony现在不使用DMP硬件解算
-//对应的硬件解算函数为IMU_Process()
+// Function name: IMUSO3Thread (void)
+// Description: Attitude software solves fusion function
+// The fusion of the function to the attitude is a software solution. Crazepony does not use DMP hardware to solve
+// The corresponding hardware solution function is IMU_Process ()
 void IMUSO3Thread(void)
 {
     //! Time constant

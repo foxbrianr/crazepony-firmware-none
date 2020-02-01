@@ -37,5 +37,4 @@ float LPF2pApply_6(float sample);
 
 #endif
 
-
 //------------------End of File----------------------------

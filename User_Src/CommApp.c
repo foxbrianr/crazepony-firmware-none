@@ -30,8 +30,10 @@ uint8_t btSrc = 0;
 volatile uint8_t UdataBuf[MAX_LEN];
 uint8_t bufP = 0; //static
 static uint8_t validDataLen = 0;
-const uint8_t HEADER[2] = { 0xAA, 0x55 };
-uint16_t rcData[4] = { 1500, 1500, 1500, 1500 };
+const uint8_t HEADER[2] =
+{ 0xAA, 0x55 };
+uint16_t rcData[4] =
+{ 1500, 1500, 1500, 1500 };
 
 #define CONSTRAIN(x,min,max) {if(x<min) x=min; if(x>max) x=max;}
 extern float dbScaleLinear(float x, float x_end, float deadband);
@@ -44,11 +46,13 @@ extern float dbScaleLinear(float x, float x_end, float deadband);
 // So this function prevents a fault in the CommApp.c file
 // This function is executed in the main function at a frequency of 50Hz
 // Process the RC data from 2.4G RC or smartphone APP
-void RCDataProcess(void) {
+void RCDataProcess(void)
+{
 
 	// The aircraft battery is over-discharged and is in an automatic landing state
 	// No longer respond to remote data, use median value
-	if (LANDING == altCtrlMode) {
+	if (LANDING == altCtrlMode)
+	{
 		rcData[THROTTLE] = 1500;
 		rcData[YAW] = 1500;
 		rcData[PITCH] = 1500;
@@ -68,12 +72,16 @@ void RCDataProcess(void) {
 	RC_DATA.ROOL = Angle_Max
 			* dbScaleLinear((rcData[ROLL] - 1500), 500, APP_PR_DB);
 
-	switch (armState) {
+	switch (armState)
+	{
 	case REQ_ARM:
-		if (IMUCheck() && !Battery.alarm) {
+		if (IMUCheck() && !Battery.alarm)
+		{
 			armState = ARMED;
 			FLY_ENABLE = 0xA5;
-		} else {
+		}
+		else
+		{
 			FLY_ENABLE = 0;
 			armState = DISARMED;
 		}
@@ -96,9 +104,11 @@ void RCDataProcess(void) {
 }
 
 // Process the MSP command sent to the flight controller
-void CommAppCmdProcess(void) {
+void CommAppCmdProcess(void)
+{
 	//process
-	switch (UdataBuf[4])		//MSP_SET_4CON
+	switch (UdataBuf[4])
+	//MSP_SET_4CON
 	{
 	case MSP_SET_4CON:
 		//UdataBuf
@@ -137,10 +147,13 @@ static uint8_t checksum = 0;
 
 // Process the data stream sent to the flight controller and parse out the MSP command
 // The function finally calls CommAppCmdProcess () to process the MSP command
-void CommApp(uint8_t ch) {
+void CommApp(uint8_t ch)
+{
 	UdataBuf[bufP] = ch;
-	if (bufP < 3) {
-		switch (bufP) {
+	if (bufP < 3)
+	{
+		switch (bufP)
+		{
 		case 0:
 			if (UdataBuf[bufP] == '$')
 				bufP++;
@@ -158,25 +171,28 @@ void CommApp(uint8_t ch) {
 				bufP = 0;
 			break;
 		}
-	} else	//valid data
+	}
+	else	//valid data
 	{
 		if (bufP == 3)		//len
-				{
+		{
 			checksum = 0;
 			validDataLen = UdataBuf[bufP];
 		}
 
 		bufP++;
 		if (bufP >= validDataLen + 6)// rec over. process. tobe placed in 50Hz loop
-				{
+		{
 			//chksum
-			if (UdataBuf[bufP - 1] == checksum) {
+			if (UdataBuf[bufP - 1] == checksum)
+			{
 				CommAppCmdProcess();		//could be place to main
 				btSrc = SRC_APP;
 				lastGetRCTime = millis();		//ms
 			}
 			bufP = 0;
-		} else
+		}
+		else
 			checksum ^= UdataBuf[bufP - 1];
 	}
 }
@@ -184,14 +200,16 @@ void CommApp(uint8_t ch) {
 /**
  * @brief send 8bits
  */
-static void uart8chk(uint8_t _x) {
+static void uart8chk(uint8_t _x)
+{
 	UartBuf_WD(&UartTxbuf, _x);
 	checksum ^= _x;
 }
 /**
  * @brief send 32bits
  */
-static void uart32chk(uint32_t a) {
+static void uart32chk(uint32_t a)
+{
 	static uint8_t t;
 	t = a;
 	UartBuf_WD(&UartTxbuf, t);
@@ -209,7 +227,8 @@ static void uart32chk(uint32_t a) {
 /**
  * @brief send 16bits
  */
-static void uart16chk(int16_t a) {
+static void uart16chk(int16_t a)
+{
 	static uint8_t t;
 	t = a;
 	UartBuf_WD(&UartTxbuf, t);
@@ -224,7 +243,8 @@ static void uart16chk(int16_t a) {
 // roll, pitch, yaw value, battery level, height information, etc.
 // The flight control information will not be sent cyclically,
 // but the mobile APP needs to send the MSP status request command MSP_FLY_STATE
-void CommAppUpload(void) {
+void CommAppUpload(void)
+{
 	uart8chk('$');
 	uart8chk('M');
 	uart8chk('>');
@@ -241,7 +261,9 @@ void CommAppUpload(void) {
 
 	uart8chk(checksum);
 
+	// ---------------------------------------------
 	// Enable serial port sending
+	//----------------------------------------------
 	USART_ITConfig(USART1, USART_IT_TXE, ENABLE);
 }
 

@@ -59,7 +59,9 @@ void Uart1SendaBTCmd(const char *p) {
 	// Release instruction receive buffer
 	for (i = 0; i < CmdreturnLength; i++)
 		Cmdreturn[i] = 0;
+
 	LedA_on;
+
 	// After writing an instruction, delay 500ms to receive the cache again
 	delay_ms(100);
 	LedA_off;
@@ -107,6 +109,8 @@ const char ATcmdRenewAnswer[] = { "OK+RENEW" };
 const char ATcmdBaudAsk[] = { "AT+BAUD?" };
 const char ATcmdBaudAnswer[] = { "OK+BAUD:115200" };
 const char ATcmdBaudSet[] = { "AT+BAUD4" };            //Modify Here, you can modify Bluetooth baud rate
+
+
 
 // HM-06 module, the configuration of Bluetooth 2.1 module
 //baud1--->1200

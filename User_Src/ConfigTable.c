@@ -41,11 +41,13 @@ static uint8_t isEEPROMValid(void) {
 		return 0;
 }
 
-//table defalat . if
+//---------------------------------------------------------------------------------------------------------------------------------------
+//table default
 void TableResetDefault(void) {
 	STMFLASH_Write(TABLE_ADDRESS, (uint16_t*) (&(table.version)), 2);
 }
 
+//---------------------------------------------------------------------------------------------------------------------------------------
 //load params for EEPROM
 void TableReadEEPROM(void) {
 	uint8_t paramNums = sizeof(table) / sizeof(float);
@@ -53,6 +55,7 @@ void TableReadEEPROM(void) {
 	STMFLASH_Read(TABLE_ADDRESS, (uint16_t*) (&table), paramNums * 2);
 }
 
+//---------------------------------------------------------------------------------------------------------------------------------------
 void TableWriteEEPROM(void) {
 	uint8_t paramNums = sizeof(table) / sizeof(float);
 
@@ -63,6 +66,7 @@ extern u8 RX_ADDRESS[RX_ADR_WIDTH];
 
 extern u8 NRFMatched;
 
+//---------------------------------------------------------------------------------------------------------------------------------------
 void TableToParam(void) {
 	uint8_t i = 0;
 	for (i = 0; i < 3; i++) {
@@ -97,6 +101,7 @@ void TableToParam(void) {
 
 }
 
+//---------------------------------------------------------------------------------------------------------------------------------------
 void ParamToTable(void) {
 	uint8_t i = 0;
 	float temp;
@@ -126,6 +131,7 @@ void ParamToTable(void) {
 
 }
 
+//---------------------------------------------------------------------------------------------------------------------------------------
 void LoadParamsFromEEPROM(void) {
 	if (isEEPROMValid()) {
 		TableReadEEPROM();
@@ -141,11 +147,13 @@ void LoadParamsFromEEPROM(void) {
 	}
 }
 
+//---------------------------------------------------------------------------------------------------------------------------------------
 void SaveParamsToEEPROM(void) {
 	ParamToTable();
 	TableWriteEEPROM();
 }
 
+//---------------------------------------------------------------------------------------------------------------------------------------
 //all default value
 void ParamSetDefault(void) {
 

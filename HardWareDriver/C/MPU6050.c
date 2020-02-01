@@ -10,13 +10,14 @@
                                             ____/ /
                                            /_____/
 mpu6050.c file
-编写者：小马  (Camel)
-作者E-mail：375836945@qq.com
-编译环境：MDK-Lite  Version: 4.23
-初版时间: 2014-01-28
-功能：
-1.飞机姿态传感器初始化
-2.硬件上的数据中断int脚已连接，软件是轮训机制，大家可以在这方面做修改
+Written by: Camel
+Author E-mail: 375836945@qq.com
+Compilation environment: MDK-Lite Version: 4.23
+Initial release time: 2014-01-28
+Features:
+1. Aircraft attitude sensor initialization
+2. The data interrupt on the hardware is connected to the int pin.
+   The software is a rotation training mechanism. You can modify it in this regard.
 ------------------------------------
 */
 #include "MPU6050.h"
